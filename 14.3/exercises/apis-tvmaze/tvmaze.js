@@ -7,6 +7,33 @@ const search = axios.create({
 	timeout: 2000
 });
 
+const image = axios.create({
+	baseURL: 'http://api.tvmaze.com/shows',
+	timeout: 2000
+});
+
+// async function getImageUrl(showId) {
+// 	const req = {
+// 		method: 'GET',
+// 		url   : `/${showId}/images`
+// 	};
+// 	console.log('getImageUrl/req:', req);
+
+// return image(req).then(res => res.data[0].resolutions.medium.url) ;
+// console.log('getImageUrl/img.data:', img.data);
+// console.log('getImageUrl/img.data.resolutions:', img.data[0].resolutions.medium);
+// // console.log( 'getImageUrl/img:', img.data.resolutions.medium);
+// return ;
+// }
+
+// This works
+// function getImageUrl( d ){
+// 	console.log( 'd:', d );
+// 	const imgUrl = d.show.image.medium;
+// 	console.log( 'imgUrl:', imgUrl );
+// 	return imgUrl;
+// }
+
 /** Search Shows
  *    - given a search term, search for tv shows that
  *      match that query.  The function is async show it
@@ -31,23 +58,38 @@ async function searchShows(query) {
 		params: {q: query}
 	};
 
+	function getImageUrl(showId) {
+		const url = `http://api.tvmaze.com/shows/${showId}/images`;
+		// console.log('getImageUrl/req:', url);
+		const img = axios.get(url).then(img => img.data[0].resolutions.medium.url);
+		console.log('img:', img);
+		return img;
+	}
+
 	const res    = await search(req);
 	const retArr = [];
-	const ret    = res.data.forEach(d => retArr.push({
-		id     : d.show.id,
-		name   : d.show.name,
-		summary: d.show.summary
-	}));
-	console.log(res);
-	return retArr;
+	return res.data.forEach( function (d) {
+		return getImageUrl(d.show.id).then(u =>
+			retArr.push({
+				id      : d.show.id,
+				imageUrl: u,
+				name    : d.show.name,
+				summary : d.show.summary
+			})
+		).then( (res2 ) => console.log( 'res2:', res2 ) );
+	});
+	// console.log( 'before return/retArr:', retArr );
+	// return ret;
 }
+
 /** Populate shows list:
  *     - given list of shows, add shows to DOM
  */
 
 function populateShows(shows) {
+	console.log( 'populateShows/shows:', shows );
 	const $showsList = $("#shows-list");
-	$showsList.empty();
+	$showsList.empty()
 
 	for (let show of shows) {
 		let $item = $(
@@ -56,6 +98,7 @@ function populateShows(shows) {
            <div class="card-body">
              <h5 class="card-title">${show.name}</h5>
              <p class="card-text">${show.summary}</p>
+             <img class="card-img-top" src="${show.imageUrl}">
            </div>
          </div>
        </div>
