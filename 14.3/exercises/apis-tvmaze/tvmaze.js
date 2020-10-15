@@ -19,13 +19,13 @@
 
 const search = axios.create({
 	baseURL: 'http://api.tvmaze.com/search',
-	timeout: 2000
+	timeout: 5000
 });
 
-const images = axios.create({
-	url: 'http://api.tvmaze.com/shows',
-	timeout: 2000
-});
+// const images = axios.create({
+// 	url: 'http://api.tvmaze.com/shows',
+// 	timeout: 2000
+// });
 
 async function searchShows(query) {
 	// TODO: Make an ajax request to the searchShows api.  Remove
@@ -34,18 +34,64 @@ async function searchShows(query) {
 	const searchRes = await (search.get('/shows', {params: {q: query}}));
 	console.log('searchRes:', searchRes);
 	const resData = searchRes.data;
-	console.log('resData/before:', resData );
-	resData.forEach( res => console.log( res.show.image.medium ) );
-	console.log('resData/after:', resData );
-	const shows = [];
+	// console.log('resData/before:', resData);
+	// resData.forEach(res => console.log(res.show.image.medium));
+	// console.log('resData/after:', resData);
+	let shows = [];
 	let imgUrl;
 	let img;
-	resData.forEach(meta => {
-		imgUrl = meta.show.image.medium;
-		shows.push({id: meta.show.id, name: meta.show.name, summary: meta.show.summary, imgUrl })
-	});
-	console.log('shows:', shows);
-	return shows;
+	// async function checkImage (shows ) {
+	// 	const shois = shows.clone();
+	// 	shows.forEach( show => {
+	//
+	//
+	//
+	// 	});
+	// };
+
+	const checkOneUrl = async function (imgUrl) {
+		return await axios
+			.get(imgUrl)
+			.then(() => true)
+			.catch(() => false);
+	};
+
+	// console.log( 'before')
+	// console.log( 'checkOneImage', await
+	// checkOneImage('http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpgx') ); console.log( 'after'
+	// );
+
+	const updateShows = async function (meta) {
+		console.log('updateShows 1/meta:', meta);
+		imgUrl = meta.show.image;
+		if ( !imgUrl || !imgUrl.medium) {
+			imgUrl = 'https://tinyurl.com/tv-missing';
+		} else {
+			await checkOneUrl(imgUrl.medium).then(isValidUrl => {
+				console.log('isValidUrl', isValidUrl);
+				if ( !isValidUrl) {
+					imgUrl = 'https://tinyurl.com/tv-missing';
+				} else {
+					imgUrl = imgUrl.medium;
+				}
+			});
+		}
+		console.log('imgUrl:', imgUrl);
+		console.log('updateShows 2', shows);
+		shows.push({id: meta.show.id, name: meta.show.name, summary: meta.show.summary, imgUrl});
+	}
+
+	const foritch = async function (resD) {
+		for (let meta in resD) {
+			await updateShows(resData[meta]);
+		}
+		return shows;
+	};
+	console.log('before the foreach');
+	return foritch(resData);
+	// shows = await checkImage ( shows );
+	// console.log('shows:', shows);
+	// return shows;
 }
 
 /** Populate shows list:
