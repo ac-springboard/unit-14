@@ -2,38 +2,6 @@
  *     { id, name, summary, episodesUrl }
  */
 
-const search = axios.create({
-	baseURL: 'http://api.tvmaze.com/search',
-	timeout: 2000
-});
-
-const image = axios.create({
-	baseURL: 'http://api.tvmaze.com/shows',
-	timeout: 2000
-});
-
-// async function getImageUrl(showId) {
-// 	const req = {
-// 		method: 'GET',
-// 		url   : `/${showId}/images`
-// 	};
-// 	console.log('getImageUrl/req:', req);
-
-// return image(req).then(res => res.data[0].resolutions.medium.url) ;
-// console.log('getImageUrl/img.data:', img.data);
-// console.log('getImageUrl/img.data.resolutions:', img.data[0].resolutions.medium);
-// // console.log( 'getImageUrl/img:', img.data.resolutions.medium);
-// return ;
-// }
-
-// This works
-// function getImageUrl( d ){
-// 	console.log( 'd:', d );
-// 	const imgUrl = d.show.image.medium;
-// 	console.log( 'imgUrl:', imgUrl );
-// 	return imgUrl;
-// }
-
 /** Search Shows
  *    - given a search term, search for tv shows that
  *      match that query.  The function is async show it
@@ -48,38 +16,36 @@ const image = axios.create({
         image: <an image from the show data, or a default imege if no image exists, (image isn't needed until later)>
       }
  */
+
+const search = axios.create({
+	baseURL: 'http://api.tvmaze.com/search',
+	timeout: 2000
+});
+
+const images = axios.create({
+	url: 'http://api.tvmaze.com/shows',
+	timeout: 2000
+});
+
 async function searchShows(query) {
-	// TODO: Step-3 - Make an ajax request to the searchShows api.  Remove
+	// TODO: Make an ajax request to the searchShows api.  Remove
 	// hard coded data.
 
-	const req = {
-		method: 'GET',
-		url   : '/shows',
-		params: {q: query}
-	};
-
-	function getImageUrl(showId) {
-		const url = `http://api.tvmaze.com/shows/${showId}/images`;
-		// console.log('getImageUrl/req:', url);
-		const img = axios.get(url).then(img => img.data[0].resolutions.medium.url);
-		console.log('img:', img);
-		return img;
-	}
-
-	const res    = await search(req);
-	const retArr = [];
-	return res.data.forEach( function (d) {
-		return getImageUrl(d.show.id).then(u =>
-			retArr.push({
-				id      : d.show.id,
-				imageUrl: u,
-				name    : d.show.name,
-				summary : d.show.summary
-			})
-		).then( (res2 ) => console.log( 'res2:', res2 ) );
+	const searchRes = await (search.get('/shows', {params: {q: query}}));
+	console.log('searchRes:', searchRes);
+	const resData = searchRes.data;
+	console.log('resData/before:', resData );
+	resData.forEach( res => console.log( res.show.image.medium ) );
+	console.log('resData/after:', resData );
+	const shows = [];
+	let imgUrl;
+	let img;
+	resData.forEach(meta => {
+		imgUrl = meta.show.image.medium;
+		shows.push({id: meta.show.id, name: meta.show.name, summary: meta.show.summary, imgUrl })
 	});
-	// console.log( 'before return/retArr:', retArr );
-	// return ret;
+	console.log('shows:', shows);
+	return shows;
 }
 
 /** Populate shows list:
@@ -87,18 +53,17 @@ async function searchShows(query) {
  */
 
 function populateShows(shows) {
-	console.log( 'populateShows/shows:', shows );
 	const $showsList = $("#shows-list");
-	$showsList.empty()
+	$showsList.empty();
 
 	for (let show of shows) {
 		let $item = $(
 			`<div class="col-md-6 col-lg-3 Show" data-show-id="${show.id}">
          <div class="card" data-show-id="${show.id}">
+         <img class="card-img-top" src="${show.imgUrl}">
            <div class="card-body">
              <h5 class="card-title">${show.name}</h5>
              <p class="card-text">${show.summary}</p>
-             <img class="card-img-top" src="${show.imageUrl}">
            </div>
          </div>
        </div>
