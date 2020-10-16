@@ -158,22 +158,28 @@ $("#search-form").on("submit", async function handleSearch(evt) {
  */
 
 async function getEpisodes(id) {
-	// TODO: get episodes from tvmaze
-	//       you can get this by making GET request to
-	//       http://api.tvmaze.com/shows/SHOW-ID-HERE/episodes
-
-	// TODO: return array-of-episode-info, as described in docstring above
 	const rawEpisodeList = await axios.get(`http://api.tvmaze.com/shows/${id}/episodes`);
 	return rawEpisodeList.data.map((episode) => {
-		let {id, name, season, number } = episode;
+		const {id, name, season, number } = episode;
 		return {id, name, season, number };
 	});
 }
 
 async function populateEpisodes(showId) {
 	const structuredEpisodeList = await getEpisodes(showId);
+	const $episodesList = $('#episodes-list');
+	$episodesList.empty();
 
-	console.log( 'structuredEpisodeList', structuredEpisodeList );
+	function makeLi( episode ){
+		const { name, season, number } = episode;
+		return $(
+			`<li class="list-group-item">${name} (season ${season}, number ${number})</li>`
+		);
+	}
+
+	$("#episodes-area").show();
+	structuredEpisodeList.forEach( episode => $episodesList.append( $(makeLi( episode) ) ) );
+	window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
 
