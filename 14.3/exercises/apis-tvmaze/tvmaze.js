@@ -108,15 +108,16 @@ function populateShows(shows) {
 		let $item = $(
 			`<div class="col-md-6 col-lg-3 Show" data-show-id="${show.id}">
          <div class="card" data-show-id="${show.id}">
-         <img class="card-img-top" src="${show.image}">
-           <div class="card-body">
-             <h5 class="card-title">${show.name}</h5>
-             <p class="card-text">${show.summary}</p>
-           </div>
+					 <img class="card-img-top" src="${show.image}" />
+					 <div class="card-body">
+						 <h5 class="card-title">${show.name}</h5>
+						 <p class="card-text">${show.summary}</p>
+					 </div>
+					 <button class="show-episodes btn bg-primary">Show Episodes</button>
          </div>
        </div>
       `);
-
+		$item.on('click', '.show-episodes', (e) => populateEpisodes(e.delegateTarget.dataset.showId));
 		$showsList.append($item);
 	}
 }
@@ -162,4 +163,17 @@ async function getEpisodes(id) {
 	//       http://api.tvmaze.com/shows/SHOW-ID-HERE/episodes
 
 	// TODO: return array-of-episode-info, as described in docstring above
+	const rawEpisodeList = await axios.get(`http://api.tvmaze.com/shows/${id}/episodes`);
+	return rawEpisodeList.data.map((episode) => {
+		let {id, name, season, number } = episode;
+		return {id, name, season, number };
+	});
 }
+
+async function populateEpisodes(showId) {
+	const structuredEpisodeList = await getEpisodes(showId);
+
+	console.log( 'structuredEpisodeList', structuredEpisodeList );
+}
+
+
